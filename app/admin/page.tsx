@@ -44,38 +44,65 @@ export default function AdminPage() {
           .select("*")
           .order("created_at", { ascending: false })
 
-        if (businessesError) throw businessesError
+        if (businessesError) {
+          console.error("Error fetching businesses:", businessesError)
+          // Continue execution even if there's an error
+        }
         setBusinesses(businessesData || [])
 
         // Count pending businesses
         const pendingBusinesses = businessesData?.filter((b) => !b.is_approved) || []
         setPendingCount(pendingBusinesses.length)
 
-        // Fetch events
-        const { data: eventsData, error: eventsError } = await supabase
-          .from("events")
-          .select("*")
-          .order("start_date", { ascending: true })
+        // Try to fetch events, but don't fail if table doesn't exist
+        try {
+          const { data: eventsData, error: eventsError } = await supabase
+            .from("events")
+            .select("*")
+            .order("start_date", { ascending: true })
 
-        if (eventsError) throw eventsError
-        setEvents(eventsData || [])
+          if (eventsError) {
+            console.warn("Events table may not exist:", eventsError.message)
+          }
+          setEvents(eventsData || [])
+        } catch (eventError) {
+          console.warn("Could not fetch events:", eventError)
+          setEvents([])
+        }
 
-        // Fetch site stats
-        const { data: viewsData } = await supabase.from("business_views").select("id")
+        // Try to fetch business views, but don't fail if table doesn't exist
+        let viewsCount = 0
+        try {
+          const { data: viewsData, error: viewsError } = await supabase.from("business_views").select("id")
+          if (!viewsError) {
+            viewsCount = viewsData?.length || 0
+          }
+        } catch (viewsError) {
+          console.warn("Could not fetch business views:", viewsError)
+        }
 
-        const { data: usersData } = await supabase.from("profiles").select("id")
+        // Try to fetch profiles, but don't fail if table doesn't exist
+        let usersCount = 0
+        try {
+          const { data: usersData, error: usersError } = await supabase.from("profiles").select("id")
+          if (!usersError) {
+            usersCount = usersData?.length || 0
+          }
+        } catch (usersError) {
+          console.warn("Could not fetch profiles:", usersError)
+        }
 
         setSiteStats({
           totalBusinesses: businessesData?.length || 0,
-          totalEvents: eventsData?.length || 0,
-          totalViews: viewsData?.length || 0,
-          totalUsers: usersData?.length || 0,
+          totalEvents: events.length || 0,
+          totalViews: viewsCount,
+          totalUsers: usersCount,
         })
       } catch (error) {
         console.error("Error fetching data:", error)
         toast({
           title: "Error fetching data",
-          description: "Could not load admin dashboard data",
+          description: "Some database tables may not exist yet. Please run the database setup.",
           variant: "destructive",
         })
       } finally {
@@ -190,6 +217,22 @@ export default function AdminPage() {
           </Button>
         </div>
       </div>
+
+      {/* Database Setup Notice */}
+      <Card className="mb-8 border-yellow-200 bg-yellow-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+            <p className="text-yellow-800">
+              If you're seeing errors about missing tables, please run the{" "}
+              <Link href="/admin/setup" className="font-medium underline">
+                database setup
+              </Link>{" "}
+              to create all required tables.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Site Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
