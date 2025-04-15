@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
         description: "Welcome to the admin dashboard.",
       })
 
-      router.push("/admin")
+      router.push("/admin/dashboard")
       router.refresh()
     } catch (error: any) {
       toast({
