@@ -4,7 +4,10 @@ import { notFound } from "next/navigation"
 import { getSupabaseServer } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Phone, Globe, Mail, Star, ArrowLeft } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { MapPin, Phone, Globe, Mail, Star, ArrowLeft, ExternalLink } from "lucide-react"
+import { BusinessReviews } from "@/components/business-reviews"
+import { RecordBusinessView } from "@/components/record-business-view"
 
 export const revalidate = 3600 // Revalidate every hour
 export const dynamic = "force-dynamic" // Skip static generation for this page
@@ -43,11 +46,43 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
       // Continue with empty reviews
     }
 
+    // Fetch business images
+    let images = []
+    try {
+      const { data } = await supabase
+        .from("business_images")
+        .select("*")
+        .eq("business_id", params.id)
+        .order("is_primary", { ascending: false })
+
+      if (data) {
+        images = data
+      }
+    } catch (imageError) {
+      console.error("Error fetching images:", imageError)
+      // Continue with empty images
+    }
+
     // Calculate average rating
-    const averageRating = reviews?.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0
+    const averageRating = business.average_rating || 0
+
+    // Format amenities for display
+    const formattedAmenities =
+      business.amenities?.map((amenity: string) => {
+        return {
+          id: amenity,
+          label: amenity
+            .split("_")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" "),
+        }
+      }) || []
 
     return (
       <div className="container py-12">
+        {/* Client-side component to record view */}
+        <RecordBusinessView businessId={params.id} />
+
         <Link
           href="/business-directory"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -61,72 +96,77 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
               <Image
                 src={
                   business.image_url ||
-                  `/placeholder.svg?height=600&width=1200&query=${encodeURIComponent(business.name) || "/placeholder.svg"}+in+Ruse+Bulgaria`
+                  (images.length > 0 && images[0].url) ||
+                  `/placeholder.svg?height=600&width=1200&query=${encodeURIComponent(business.name)}+in+Ruse+Bulgaria`
                 }
                 alt={business.name}
                 fill
                 className="object-cover"
               />
+              {business.is_featured && (
+                <Badge className="absolute top-4 right-4 bg-yellow-500 hover:bg-yellow-600">Featured</Badge>
+              )}
             </div>
+
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {images.slice(0, 4).map((image) => (
+                  <div key={image.id} className="relative aspect-square overflow-hidden rounded-md">
+                    <Image
+                      src={image.url || "/placeholder.svg"}
+                      alt={image.alt_text || business.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div>
               <h1 className="text-3xl font-bold">{business.name}</h1>
-              <p className="text-muted-foreground capitalize mt-1">{business.category}</p>
-
-              {reviews?.length ? (
-                <div className="flex items-center mt-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < Math.round(averageRating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                      }`}
-                    />
-                  ))}
-                  <span className="text-sm ml-2">
-                    {averageRating.toFixed(1)} ({reviews.length} reviews)
-                  </span>
-                </div>
-              ) : null}
+              <div className="flex items-center mt-2">
+                <Badge variant="outline" className="capitalize mr-2">
+                  {business.category}
+                </Badge>
+                {averageRating > 0 && (
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.round(averageRating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                    <span className="text-sm ml-2">
+                      {averageRating.toFixed(1)} ({reviews.length} reviews)
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
               <h2 className="text-xl font-semibold mb-3">About</h2>
-              <p className="text-muted-foreground">{business.description}</p>
+              <p className="text-muted-foreground whitespace-pre-line">{business.description}</p>
             </div>
 
-            {reviews?.length ? (
+            {formattedAmenities.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold mb-3">Reviews</h2>
-                <div className="space-y-4">
-                  {reviews.map((review) => (
-                    <Card key={review.id}>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="font-medium">{review.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(review.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-sm">{review.comment}</p>
-                      </CardContent>
-                    </Card>
+                <h2 className="text-xl font-semibold mb-3">Amenities</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {formattedAmenities.map((amenity) => (
+                    <div key={amenity.id} className="flex items-center">
+                      <div className="h-2 w-2 rounded-full bg-primary mr-2" />
+                      <span className="text-sm">{amenity.label}</span>
+                    </div>
                   ))}
                 </div>
               </div>
-            ) : null}
+            )}
+
+            <BusinessReviews businessId={params.id} initialReviews={reviews} />
           </div>
 
           <div className="space-y-6">
@@ -204,7 +244,7 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-1"
                   >
-                    View on Google Maps <Globe className="ml-1 h-4 w-4" />
+                    View on Google Maps <ExternalLink className="ml-1 h-4 w-4" />
                   </a>
                 </Button>
               </CardContent>
