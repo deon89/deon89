@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { UserNav } from "@/components/user-nav"
 
 export function Header() {
   return (
@@ -29,9 +29,7 @@ export function Header() {
           </Link>
         </nav>
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/business/register">List Your Business</Link>
-          </Button>
+          <UserNav />
         </div>
       </div>
     </header>

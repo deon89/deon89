@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { getSupabaseBrowser } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,9 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get("returnUrl") || "/dashboard"
+
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -47,7 +50,8 @@ export default function LoginPage() {
         description: "Welcome back to your business dashboard.",
       })
 
-      router.push("/dashboard")
+      // Immediately redirect to dashboard
+      router.push(returnUrl)
       router.refresh()
     } catch (error: any) {
       toast({
@@ -55,7 +59,6 @@ export default function LoginPage() {
         description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       })
-    } finally {
       setIsLoading(false)
     }
   }

@@ -28,6 +28,20 @@ export async function setupDatabase() {
 
     if (businessesError) throw businessesError
 
+    // Create profiles table
+    const { error: profilesError } = await supabase.query(`
+      CREATE TABLE IF NOT EXISTS profiles (
+        id UUID PRIMARY KEY REFERENCES auth.users(id),
+        full_name TEXT,
+        email TEXT UNIQUE NOT NULL,
+        avatar_url TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `)
+
+    if (profilesError) throw profilesError
+
     // Create events table
     const { error: eventsError } = await supabase.query(`
       CREATE TABLE IF NOT EXISTS events (
@@ -67,6 +81,7 @@ export async function setupDatabase() {
       ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
       ALTER TABLE events ENABLE ROW LEVEL SECURITY;
       ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
       -- Policy for businesses: anyone can read approved businesses
       CREATE POLICY IF NOT EXISTS "Anyone can read approved businesses"
@@ -93,6 +108,23 @@ export async function setupDatabase() {
       CREATE POLICY IF NOT EXISTS "Authenticated users can insert reviews"
         ON reviews FOR INSERT
         TO authenticated
+        WITH CHECK (true);
+
+      -- Policy for profiles: anyone can read profiles
+      CREATE POLICY IF NOT EXISTS "Anyone can read profiles"
+        ON profiles FOR SELECT
+        USING (true);
+
+      -- Policy for profiles: users can update their own profile
+      CREATE POLICY IF NOT EXISTS "Users can update their own profile"
+        ON profiles FOR UPDATE
+        USING (auth.uid() = id)
+        WITH CHECK (auth.uid() = id);
+
+      -- Policy for profiles: service role can insert profiles
+      CREATE POLICY IF NOT EXISTS "Service role can insert profiles"
+        ON profiles FOR INSERT
+        TO service_role
         WITH CHECK (true);
     `)
 

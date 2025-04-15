@@ -5,7 +5,6 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { getSupabaseBrowser } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "@/components/ui/use-toast"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { registerUser } from "@/app/actions/auth-actions"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -66,39 +66,24 @@ export default function RegisterPage() {
     }
 
     try {
-      const supabase = getSupabaseBrowser()
-
-      // Register the user
-      const { data, error } = await supabase.auth.signUp({
+      // Use the server action to register the user
+      const result = await registerUser({
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            full_name: formData.name,
-          },
-        },
+        name: formData.name,
       })
 
-      if (error) throw error
-
-      // Create a profile record
-      if (data.user) {
-        const { error: profileError } = await supabase.from("profiles").insert({
-          id: data.user.id,
-          full_name: formData.name,
-          email: formData.email,
-          created_at: new Date().toISOString(),
-        })
-
-        if (profileError) throw profileError
+      if (!result.success) {
+        throw new Error(result.error)
       }
 
       toast({
         title: "Registration successful",
-        description: "Please check your email to verify your account.",
+        description: "Your account has been created. You can now log in.",
       })
 
-      router.push("/auth/verification-sent")
+      // Redirect to login page
+      router.push("/auth/login")
     } catch (error: any) {
       toast({
         title: "Registration failed",
@@ -115,7 +100,7 @@ export default function RegisterPage() {
       <div className="mx-auto max-w-md">
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Register Your Business</CardTitle>
+            <CardTitle className="text-2xl font-bold">Register Your Account</CardTitle>
             <CardDescription>Create an account to manage your business listing</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>

@@ -10,12 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Building, Plus, Settings, BarChart3, Loader2 } from "lucide-react"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { BusinessCard } from "@/components/dashboard/business-card"
+import { BusinessAnalytics } from "@/components/dashboard/business-analytics"
 
 export default function DashboardPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [businesses, setBusinesses] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -38,6 +40,9 @@ export default function DashboardPage() {
 
       if (!error && businessData) {
         setBusinesses(businessData)
+        if (businessData.length > 0) {
+          setSelectedBusinessId(businessData[0].id)
+        }
       }
 
       setIsLoading(false)
@@ -120,18 +125,46 @@ export default function DashboardPage() {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics</CardTitle>
-              <CardDescription>View statistics for your business listings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Analytics features will be available soon. You'll be able to track views, clicks, and engagement for
-                your business listings.
-              </p>
-            </CardContent>
-          </Card>
+          {businesses.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>No analytics available</CardTitle>
+                <CardDescription>You need to add a business first to see analytics data.</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button asChild>
+                  <Link href="/dashboard/business/new">Add Your First Business</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Business Analytics</h2>
+                <select
+                  className="border rounded p-2"
+                  value={selectedBusinessId || ""}
+                  onChange={(e) => setSelectedBusinessId(e.target.value)}
+                >
+                  {businesses.map((business) => (
+                    <option key={business.id} value={business.id}>
+                      {business.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedBusinessId ? (
+                <BusinessAnalytics businessId={selectedBusinessId} />
+              ) : (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <p className="text-muted-foreground">Please select a business to view analytics</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="settings">
