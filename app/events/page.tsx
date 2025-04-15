@@ -4,19 +4,29 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export const revalidate = 3600 // Revalidate every hour
+export const dynamic = "force-dynamic" // Skip static generation for this page
 
 export default async function EventsPage() {
-  const supabase = getSupabaseServer()
+  let events = []
 
-  // Fetch events from Supabase
-  const { data: events, error } = await supabase
-    .from("events")
-    .select("*")
-    .gte("end_date", new Date().toISOString()) // Only future events
-    .order("start_date", { ascending: true })
+  try {
+    const supabase = getSupabaseServer()
 
-  if (error) {
-    console.error("Error fetching events:", error)
+    // Fetch events from Supabase
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .gte("end_date", new Date().toISOString()) // Only future events
+      .order("start_date", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching events:", error)
+    } else if (data) {
+      events = data
+    }
+  } catch (error) {
+    console.error("Failed to fetch events:", error)
+    // Continue with empty events array
   }
 
   return (
@@ -32,7 +42,7 @@ export default async function EventsPage() {
         </Button>
       </div>
 
-      <EventsList events={events || []} />
+      <EventsList events={events} />
     </div>
   )
 }

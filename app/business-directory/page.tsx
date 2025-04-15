@@ -2,18 +2,25 @@ import { getSupabaseServer } from "@/lib/supabase"
 import { BusinessDirectory } from "@/components/business-directory"
 
 export const revalidate = 3600 // Revalidate every hour
+export const dynamic = "force-dynamic" // Skip static generation for this page
 
 export default async function BusinessDirectoryPage() {
-  const supabase = getSupabaseServer()
+  let businesses = []
 
-  // Fetch businesses from Supabase
-  const { data: businesses, error } = await supabase
-    .from("businesses")
-    .select("*")
-    .order("created_at", { ascending: false })
+  try {
+    const supabase = getSupabaseServer()
 
-  if (error) {
-    console.error("Error fetching businesses:", error)
+    // Fetch businesses from Supabase
+    const { data, error } = await supabase.from("businesses").select("*").order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching businesses:", error)
+    } else if (data) {
+      businesses = data
+    }
+  } catch (error) {
+    console.error("Failed to fetch businesses:", error)
+    // Continue with empty businesses array
   }
 
   return (
@@ -22,7 +29,7 @@ export default async function BusinessDirectoryPage() {
       <p className="mb-8 text-lg text-muted-foreground">
         Find local businesses, restaurants, hotels, and services in Ruse.
       </p>
-      <BusinessDirectory businesses={businesses || []} />
+      <BusinessDirectory businesses={businesses} />
     </div>
   )
 }
