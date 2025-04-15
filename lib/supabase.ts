@@ -6,23 +6,7 @@ const createBrowserClient = () => {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Missing Supabase environment variables")
-    // Return a mock client that won't throw errors
-    return {
-      auth: {
-        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-        signInWithPassword: () =>
-          Promise.resolve({ data: null, error: new Error("Missing Supabase environment variables") }),
-        signOut: () => Promise.resolve({ error: null }),
-      },
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            single: () => Promise.resolve({ data: null, error: null }),
-          }),
-        }),
-      }),
-    } as any
+    throw new Error("Missing Supabase environment variables")
   }
 
   return createClient(supabaseUrl, supabaseAnonKey)
@@ -32,10 +16,6 @@ const createBrowserClient = () => {
 let browserClient: ReturnType<typeof createClient> | null = null
 
 export function getSupabaseBrowser() {
-  if (typeof window === "undefined") {
-    throw new Error("getSupabaseBrowser should only be called in the browser")
-  }
-
   if (!browserClient) {
     browserClient = createBrowserClient()
   }
@@ -48,6 +28,7 @@ export function getSupabaseServer() {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseServiceKey) {
+    // Instead of throwing an error, return a mock client or handle gracefully
     console.warn("Missing Supabase environment variables, returning mock client")
 
     // Return a mock client that returns empty data
@@ -60,6 +41,7 @@ export function getSupabaseServer() {
           }),
         }),
       }),
+      query: () => ({ error: null }),
     } as any
   }
 

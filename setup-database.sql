@@ -66,6 +66,6 @@ CREATE TABLE IF NOT EXISTS reviews (
 -- Insert admin user into profiles table (you'll need to replace with your actual admin user ID)
 -- You'll get this ID after creating the user in the Authentication section
 INSERT INTO profiles (id, full_name, email, role)
-VALUES ('YOUR_ADMIN_USER_ID', 'Admin User', 'admin@ruse-tourism.com', 'admin')
+VALUES ('YOUR_ADMIN_USER_ID', 'New Admin', 'new_admin@ruse-tourism.com', 'admin')
 ON CONFLICT (id) DO UPDATE
-SET role = 'admin', full_name = 'Admin User';
+SET role = 'admin', full_name = 'New Admin';

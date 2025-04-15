@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Building, Calendar, Users, Eye, Plus } from "lucide-react"
 
-export default function AdminDashboardPage() {
+export const dynamic = "force-dynamic"
+
+export default async function AdminDashboardPage() {
   return (
     <div className="container py-10">
       <div className="flex justify-between items-center mb-8">
