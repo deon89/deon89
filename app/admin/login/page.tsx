@@ -10,14 +10,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { InfoIcon } from "lucide-react"
+import Link from "next/link"
 
 export default function AdminLoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     email: "admin@ruse-tourism.com",
     password: "",
@@ -31,31 +33,17 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     try {
       const supabase = getSupabaseBrowser()
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       })
 
-      if (error) {
-        throw error
-      }
-
-      // Check if user is admin
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("email", formData.email)
-        .single()
-
-      if (profileError) {
-        throw profileError
-      }
-
-      if (profile.role !== "admin") {
-        throw new Error("You do not have admin privileges")
+      if (signInError) {
+        throw signInError
       }
 
       toast({
@@ -71,6 +59,7 @@ export default function AdminLoginPage() {
         description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       })
+      setError(error.message || "Login failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -91,13 +80,31 @@ export default function AdminLoginPage() {
               <AlertDescription>
                 Email: admin@ruse-tourism.com
                 <br />
-                To set up the default admin account, visit{" "}
-                <a href="/api/setup-admin" className="text-primary underline">
-                  the setup page
-                </a>{" "}
+                To set up the database and admin account, visit{" "}
+                <Link href="/admin/setup-database" className="text-primary underline">
+                  the database setup page
+                </Link>{" "}
                 first.
               </AlertDescription>
             </Alert>
+
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>
+                  {error}
+                  {error.includes("Database tables not set up") && (
+                    <div className="mt-2">
+                      <Link href="/admin/setup-database" className="text-primary underline">
+                        Run Database Setup
+                      </Link>
+                    </div>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
