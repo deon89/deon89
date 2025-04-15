@@ -7,14 +7,20 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res })
 
   // Check if the route is an admin route
-  if (req.nextUrl.pathname.startsWith("/admin")) {
+  if (
+    req.nextUrl.pathname.startsWith("/admin") &&
+    !req.nextUrl.pathname.startsWith("/admin/login") &&
+    !req.nextUrl.pathname.startsWith("/admin/setup") &&
+    !req.nextUrl.pathname.startsWith("/admin/create-admin") &&
+    !req.nextUrl.pathname.startsWith("/api/")
+  ) {
     const {
       data: { session },
     } = await supabase.auth.getSession()
 
-    // If no session or no user, redirect to login
+    // If no session or no user, redirect to admin login
     if (!session?.user) {
-      const redirectUrl = new URL("/auth/login", req.url)
+      const redirectUrl = new URL("/admin/login", req.url)
       redirectUrl.searchParams.set("redirect", req.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
     }
