@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { setupDatabase } from "@/app/actions/setup-database"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle } from "lucide-react"
+import { AlertCircle, CheckCircle, UserPlus } from "lucide-react"
 
 export default function SetupPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -27,7 +28,7 @@ export default function SetupPage() {
   return (
     <div className="container py-12">
       <div className="mx-auto max-w-md">
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle>Database Setup</CardTitle>
             <CardDescription>Initialize the database tables for the Ruse Tourism Website.</CardDescription>
@@ -56,6 +57,26 @@ export default function SetupPage() {
           <CardFooter>
             <Button onClick={handleSetup} disabled={isLoading} className="w-full">
               {isLoading ? "Setting Up..." : "Set Up Database"}
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Admin User</CardTitle>
+            <CardDescription>Set up an administrator account to manage the website.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              After setting up the database, create an admin user to access the admin dashboard.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button asChild className="w-full">
+              <Link href="/admin/create-admin">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Create Admin User
+              </Link>
             </Button>
           </CardFooter>
         </Card>
