@@ -50,15 +50,15 @@ export default function LoginPage() {
         description: "Welcome back to your business dashboard.",
       })
 
-      // Immediately redirect to dashboard
-      router.push(returnUrl)
-      router.refresh()
+      // Force a hard navigation to ensure the page refreshes completely
+      window.location.href = returnUrl
     } catch (error: any) {
       toast({
         title: "Login failed",
         description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       })
+    } finally {
       setIsLoading(false)
     }
   }

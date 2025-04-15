@@ -14,8 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/components/ui/use-toast"
-import { ArrowLeft, Loader2, Upload } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { BusinessFormSkeleton } from "@/components/dashboard/business-form-skeleton"
+import { ImageUpload } from "@/components/image-upload"
 
 const categories = [
   { value: "restaurant", label: "Restaurant" },
@@ -330,6 +331,12 @@ export default function EditBusinessPage({ params }: { params: { id: string } })
             <CardDescription>Upload images of your business</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <ImageUpload
+              onImageUploaded={(url) => setFormData((prev) => ({ ...prev, image_url: url }))}
+              existingImageUrl={formData.image_url}
+              businessId={params.id}
+            />
+
             <div className="space-y-2">
               <Label htmlFor="image_url">Image URL (optional)</Label>
               <Input
@@ -342,14 +349,8 @@ export default function EditBusinessPage({ params }: { params: { id: string } })
                 placeholder="https://"
               />
               <p className="text-xs text-muted-foreground">
-                Enter a URL for your business image. Image upload functionality coming soon.
+                Enter a URL for your business image or use the upload feature above.
               </p>
-            </div>
-
-            <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center">
-              <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Drag and drop image files here, or click to select files</p>
-              <p className="text-xs text-muted-foreground mt-1">(Image upload functionality coming soon)</p>
             </div>
           </CardContent>
         </Card>

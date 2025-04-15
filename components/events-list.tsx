@@ -20,6 +20,12 @@ interface EventsListProps {
 }
 
 export function EventsList({ events }: EventsListProps) {
+  // Update the EventsList component to handle empty events array gracefully
+  // Add this check at the beginning of the component
+  if (!events || events.length === 0) {
+    return null // The parent component will handle the empty state
+  }
+
   // Group events by month
   const eventsByMonth = events.reduce(
     (acc, event) => {

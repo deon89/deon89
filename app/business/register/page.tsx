@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/components/ui/use-toast"
 import { Loader2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { ImageUpload } from "@/components/image-upload"
 
 const categories = [
   { value: "restaurant", label: "Restaurant" },
@@ -59,6 +60,8 @@ export default function BusinessRegister() {
     contactName: "",
     acceptTerms: false,
   })
+
+  const [imageUrl, setImageUrl] = useState("")
 
   // Check if user is authenticated
   useEffect(() => {
@@ -153,7 +156,7 @@ export default function BusinessRegister() {
             phone: formData.phone,
             website: formData.website,
             contact_email: formData.email,
-            // Removed contact_name as it doesn't exist in the schema
+            image_url: imageUrl || formData.website, // Use the uploaded image URL if available
             amenities: selectedAmenities,
             user_id: userData.user.id, // Link to user
             is_approved: false, // Requires admin approval
@@ -361,6 +364,12 @@ export default function BusinessRegister() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Business Image</h3>
+                <p className="text-sm text-muted-foreground">Upload an image of your business</p>
+                <ImageUpload onImageUploaded={setImageUrl} existingImageUrl={imageUrl} />
               </div>
 
               <div className="flex items-center space-x-2">
